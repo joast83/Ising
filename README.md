@@ -236,3 +236,11 @@ comparing Monte Carlo with mean field, extracting nearest-neighbour SRO,
 generating random and compensated references, measuring spatial correlations
 from snapshots, and integrating exploratory magnetic free energies. The guide
 starts with your existing L=16 scan and identifies any additional data needed.
+
+## Three-component spins in 2D or 3D
+
+See [HEISENBERG.md](HEISENBERG.md) for the separate `heisenberg.py` simulator,
+with square or simple-cubic periodic lattices, unit-vector moments and optional
+biquadratic exchange K/J. Use `analyze_heisenberg.py` and `plot_heisenberg.py`
+for vector susceptibility, heat capacity, correlations and Binder cumulants.
+The original scalar `ising.py` and its analysis remain unchanged.
