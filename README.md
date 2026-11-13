@@ -220,3 +220,11 @@ for actual sampling intervals, especially at equilibration boundaries.
 
 For comparison, repeat the demonstration at T*=1.5, 2.27 and 3.5, with distinct
 output names. Starting randomly lets you observe ordering and domain growth.
+
+## Convergence checks and extra runs
+
+See [CONVERGENCE.md](CONVERGENCE.md) for the ordered command checklist for your
+104-run scan. `run_convergence.py` previews or executes focused extra runs;
+`check_convergence.py` generates a Markdown report with traces, discard and
+block-size sensitivity, and comparisons between starts, seeds and run lengths.
+The analysis never launches simulations. All extra runs require `--run`.
