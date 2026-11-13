@@ -93,3 +93,66 @@ python3 -m unittest -v
 
 Tests check bond counting, all single-spin energy differences on the 3 x 3
 lattice, detailed balance, incremental energy/magnetization, and saved samples.
+
+## Separate postprocessing (run only after simulations)
+
+The simulation never calls these scripts. They read existing files and do not
+run or alter your simulations. Analysis requires NumPy; plotting additionally
+requires Matplotlib. Install them in a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-analysis.txt
+```
+
+Analyze a single run, or all your sample CSV files:
+
+```bash
+python analyze.py data/L16_T2.3_seed1.csv --output results/single_run.csv
+python analyze.py 'data/*.csv' --output results/summary.csv
+python plot_results.py results/summary.csv
+python plot_timeseries.py data/L16_T2.3_seed1.csv --output results/L16_T2.3_trace.png
+```
+
+`plot_results.py` writes `results/observables.png` and `.pdf`, showing each L
+with its own marker/color and the Onsager and mean-field reference temperatures.
+Each input file remains a separate point, including repeated seeds at the same
+L and T; replicas are not silently combined. No transition temperature is fitted.
+`plot_timeseries.py` plots signed m and energy against production sweep, plus
+running averages. Inspect these and compare ordered/random starts and longer
+runs; an apparently flat trace alone does not prove equilibration.
+
+`analyze.py` writes one row per input file, taking L and T from file metadata,
+not filenames. Columns `abs_m`, `m`, `e_over_J`, `chi_J`, `chi_abs_J`, and
+`cv_over_kB` contain the mean absolute magnetization, mean signed magnetization,
+mean energy per spin/J, signed-m fluctuation susceptibility times J,
+N(<m^2>-<|m|>^2)/T*, and heat capacity per spin/k_B, respectively.
+The `_err` columns are preliminary standard errors from a contiguous-block
+leave-one-block-out jackknife. Run identifiers and sampling counts are retained.
+
+By default a block contains 100 **saved samples**, or 100 times `--every`
+simulation sweeps. Block size is not an automatically measured correlation time.
+Repeat analysis with progressively larger blocks and check whether errors
+stabilize while retaining many blocks (ideally at least 20). For example:
+
+```bash
+python analyze.py 'data/*.csv' --block-size 500 --output results/summary_b500.csv
+python analyze.py 'data/*.csv' --block-size 1000 --output results/summary_b1000.csv
+```
+
+All retained samples enter central estimates. An incomplete final block is
+excluded only from the error calculation; `error_samples` records its sample
+count. Fewer than two complete blocks produces NaN errors, and fewer than ten
+produces a warning. Plots omit unavailable error bars. Zero estimated error in
+a frozen chain does not establish convergence. Errors may be underestimated
+if blocks remain correlated or the run does not explore relevant states.
+
+Use `--discard 1000` to exclude an additional 1000 saved rows from each input
+file, beyond the burn-in already discarded by the simulator. The same option
+is available for time-series plots. Do not apply a large discard blindly to
+short runs. Analysis and plot outputs are replaced when rerun; raw simulation
+files are left intact. Keep summaries in `results/`, outside the sample glob.
+
+After installing analysis dependencies, `python -m unittest -v` also checks
+observable formulas and block-jackknife errors against explicit block deletion.
