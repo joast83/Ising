@@ -3,6 +3,7 @@
 
 import argparse
 import csv
+from contextlib import ExitStack
 import json
 import math
 import random
@@ -37,8 +38,31 @@ def sweep(spins, E, M, weights, rng):
     return E, M
 
 
-def simulate(L, temperature, burn, sweeps, every, seed, start, output):
+def simulate(L, temperature, burn, sweeps, every, seed, start, output,
+             snapshot_every=0, snapshot_output=None):
     """Run one independently initialized chain and stream production samples."""
+    if snapshot_every < 0:
+        raise ValueError("snapshot_every must be nonnegative")
+    if snapshot_output is not None and snapshot_every == 0:
+        raise ValueError("snapshot_output requires snapshot_every > 0")
+    output = Path(output)
+    if snapshot_every:
+        import numpy as np  # Optional: normal simulations use only the standard library.
+        snapshot_output = (Path(snapshot_output) if snapshot_output is not None
+                           else output.with_suffix(".snapshots.npz"))
+        if snapshot_output.resolve() == output.resolve():
+            raise ValueError("samples and snapshots must use different paths")
+        if snapshot_output.exists():
+            raise FileExistsError(f"{snapshot_output} already exists")
+    if output.exists():
+        raise FileExistsError(f"{output} already exists")
+    frames, frame_sweeps = [], []
+
+    def capture(step):
+        if snapshot_every:
+            frames.append(np.array(spins, dtype=np.int8))
+            frame_sweeps.append(step)
+
     rng = random.Random(seed)
     spins = [[rng.choice((-1, 1)) if start == "random" else 1
               for _ in range(L)] for _ in range(L)]
@@ -51,16 +75,31 @@ def simulate(L, temperature, burn, sweeps, every, seed, start, output):
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     # Exclusive creation prevents accidental replacement of a previous run.
-    with output.open("x", newline="") as handle:
+    with ExitStack() as stack:
+        if snapshot_every:
+            snapshot_output.parent.mkdir(parents=True, exist_ok=True)
+            snapshot_handle = stack.enter_context(snapshot_output.open("xb"))
+        handle = stack.enter_context(output.open("x", newline=""))
         handle.write("# " + json.dumps(metadata, sort_keys=True) + "\n")
         writer = csv.writer(handle)
         writer.writerow(["sweep", "E_over_J", "M", "e_over_J", "m"])
-        for _ in range(burn):
+        capture(0)
+        for step in range(1, burn + 1):
             E, M = sweep(spins, E, M, weights, rng)
+            if snapshot_every and (step % snapshot_every == 0 or step == burn):
+                capture(step)
         for step in range(1, sweeps + 1):
             E, M = sweep(spins, E, M, weights, rng)
+            total_step = burn + step
+            if snapshot_every and (total_step % snapshot_every == 0 or step == sweeps):
+                capture(total_step)
             if step % every == 0:
                 writer.writerow([step, E, M, E / (L * L), M / (L * L)])
+        if snapshot_every:
+            np.savez_compressed(snapshot_handle, spins=np.stack(frames),
+                                sweep=np.array(frame_sweeps, dtype=np.int64),
+                                metadata=json.dumps(dict(metadata, snapshot_every=snapshot_every,
+                                                         snapshot_schema_version=1)))
     return spins, E, M
 
 
@@ -74,6 +113,10 @@ def main():
     parser.add_argument("--seed", type=int, default=12345)
     parser.add_argument("--start", choices=["random", "up"], default="random")
     parser.add_argument("--output", type=Path, default=Path("data/samples.csv"))
+    parser.add_argument("--snapshot-every", type=int, default=0,
+                        help="save full spins every n total sweeps; 0 disables snapshots")
+    parser.add_argument("--snapshot-output", type=Path,
+                        help="default: sample filename with .snapshots.npz suffix")
     args = parser.parse_args()
     if args.L < 3:
         parser.error("L must be >= 3 to have four distinct periodic neighbours")
@@ -81,12 +124,18 @@ def main():
         parser.error("T must be finite and positive")
     if args.burn < 0 or args.sweeps < 1 or not 1 <= args.every <= args.sweeps:
         parser.error("require burn >= 0 and 1 <= every <= sweeps")
+    if args.snapshot_every < 0 or (args.snapshot_output and not args.snapshot_every):
+        parser.error("snapshot-every must be >= 0; snapshot-output requires it to be > 0")
     try:
         simulate(args.L, args.T, args.burn, args.sweeps, args.every,
-                 args.seed, args.start, args.output)
-    except FileExistsError:
-        parser.error(f"{args.output} already exists; choose another output filename")
+                 args.seed, args.start, args.output, args.snapshot_every, args.snapshot_output)
+    except (FileExistsError, ValueError) as exc:
+        parser.error(str(exc))
+    except ImportError:
+        parser.error("snapshots require NumPy: install requirements-analysis.txt")
     print(f"Saved {args.sweeps // args.every} samples to {args.output}")
+    if args.snapshot_every:
+        print(f"Saved spin snapshots to {args.snapshot_output or args.output.with_suffix('.snapshots.npz')}")
 
 
 if __name__ == "__main__":
