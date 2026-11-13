@@ -228,3 +228,11 @@ See [CONVERGENCE.md](CONVERGENCE.md) for the ordered command checklist for your
 `check_convergence.py` generates a Markdown report with traces, discard and
 block-size sensitivity, and comparisons between starts, seeds and run lengths.
 The analysis never launches simulations. All extra runs require `--run`.
+
+## Mean-field and magnetic-supercell comparisons
+
+See [MAGNETISM_EXTENSIONS.md](MAGNETISM_EXTENSIONS.md) for separate scripts
+comparing Monte Carlo with mean field, extracting nearest-neighbour SRO,
+generating random and compensated references, measuring spatial correlations
+from snapshots, and integrating exploratory magnetic free energies. The guide
+starts with your existing L=16 scan and identifies any additional data needed.
