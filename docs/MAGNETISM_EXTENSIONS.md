@@ -1,5 +1,8 @@
 # Mean field, magnetic supercells, correlations and free energy
 
+Run the commands below from the repository root, not from `docs/`.
+
+
 These separate tools extend the existing square-lattice Ising problem. None
 changes the simulator or launches simulations implicitly. They use the same
 analysis dependencies as before. From the repository directory:
@@ -19,8 +22,8 @@ are replaced on rerun. Raw simulation files are not changed.
 Use your existing completed scan:
 
 ```bash
-python analyze.py 'data/L16_T*_seed1.csv' --block-size 1000 --output results/L16_summary.csv
-python compare_mean_field.py results/L16_summary.csv --output-dir results/L16_mean_field
+python scripts/analyze.py 'data/L16_T*_seed1.csv' --block-size 1000 --output results/L16_summary.csv
+python scripts/compare_mean_field.py results/L16_summary.csv --output-dir results/L16_mean_field
 ```
 
 For all sizes, change the input glob to `'data/L*_T*_seed1.csv'` and use distinct
@@ -58,7 +61,7 @@ correlation: symmetry can make mean(m) zero in an ordered finite system.
 ## 2. Compare paramagnetic reference constructions (cheap)
 
 ```bash
-python paramagnetic_references.py --L 16 --samples 5000 --seed 1 \
+python scripts/paramagnetic_references.py --L 16 --samples 5000 --seed 1 \
   --output-dir results/references_L16
 ```
 
@@ -85,9 +88,9 @@ Full spin configurations are required. Existing snapshots can be used; old
 scalar CSVs cannot reconstruct spatial correlations. A modest new example is:
 
 ```bash
-python ising.py --L 16 --T 2.3 --burn 10000 --sweeps 20000 --seed 7 \
+python scripts/ising.py --L 16 --T 2.3 --burn 10000 --sweeps 20000 --seed 7 \
   --snapshot-every 20 --output data/spatial_L16_T2.3.csv
-python spatial_correlations.py data/spatial_L16_T2.3.snapshots.npz \
+python scripts/spatial_correlations.py data/spatial_L16_T2.3.snapshots.npz \
   --output-dir results/spatial_L16_T2.3
 ```
 
@@ -133,12 +136,12 @@ Start with one size, L=16. Add high-temperature samples separately:
 
 ```bash
 for T in 6.0 8.0 10.0 15.0 20.0; do
-  python ising.py --L 16 --T "$T" --burn 5000 --sweeps 50000 --seed 1 \
+  python scripts/ising.py --L 16 --T "$T" --burn 5000 --sweeps 50000 --seed 1 \
     --output "data/highT/L16_T${T}_seed1.csv"
 done
-python analyze.py 'data/L16_T*_seed1.csv' 'data/highT/L16_T*_seed1.csv' \
+python scripts/analyze.py 'data/L16_T*_seed1.csv' 'data/highT/L16_T*_seed1.csv' \
   --block-size 1000 --output results/L16_energy_scan.csv
-python integrate_free_energy.py results/L16_energy_scan.csv \
+python scripts/integrate_free_energy.py results/L16_energy_scan.csv \
   --output-dir results/L16_free_energy
 ```
 

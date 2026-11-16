@@ -1,5 +1,27 @@
 # Square-lattice Ising model
 
+## Repository layout
+
+| Folder | Contents |
+| --- | --- |
+| `scripts/` | Ising and Heisenberg simulations, analysis, plotting, animations, convergence runs and theory helpers |
+| `tests/` | Automated checks for the simulations and analysis |
+| `docs/` | Convergence, magnetic-supercell and Heisenberg guides |
+| `data/` | Your local simulation outputs (ignored by Git) |
+| `results/` | Your local analysis outputs and figures (ignored by Git) |
+
+Run all commands from the **repository root**. Script paths now begin with
+`scripts/`; for example, use `python3 scripts/ising.py` instead of
+`python3 ising.py`. Existing data formats and relative output paths are unchanged.
+If you have saved shell loops, add `scripts/` before their Python script names.
+Dependencies remain in `requirements-analysis.txt` at the root.
+Run the full test suite from the root with `python3 -m unittest -v`.
+
+The private [Spin Lab interface](https://spin-lab-joakim.sassy-siren-0023.chatgpt.site)
+can import your CSV results and GIFs. Its website source is maintained separately
+from this simulation repository.
+
+
 A compact, readable Metropolis Monte Carlo simulation in Python 3, using only
 the standard library. No packages need installing.
 
@@ -16,7 +38,7 @@ probability min(1, exp[-(Delta E/J)/T*]).
 From this repository's directory:
 
 ```bash
-python3 ising.py --L 16 --T 2.3 --burn 5000 --sweeps 20000 --seed 1 --output data/L16_T2.3_seed1.csv
+python3 scripts/ising.py --L 16 --T 2.3 --burn 5000 --sweeps 20000 --seed 1 --output data/L16_T2.3_seed1.csv
 ```
 
 For a first temperature and size scan (bash):
@@ -24,7 +46,7 @@ For a first temperature and size scan (bash):
 ```bash
 for L in 8 16 24; do
   for T in 1.5 2.0 2.1 2.2 2.25 2.3 2.35 2.4 2.5 3.0 4.0 5.0; do
-    python3 ising.py --L "$L" --T "$T" --burn 5000 --sweeps 20000 \
+    python3 scripts/ising.py --L "$L" --T "$T" --burn 5000 --sweeps 20000 \
       --seed 1 --output "data/L${L}_T${T}_seed1.csv"
   done
 done
@@ -109,21 +131,21 @@ python -m pip install -r requirements-analysis.txt
 Analyze a single run, or all your sample CSV files:
 
 ```bash
-python analyze.py data/L16_T2.3_seed1.csv --output results/single_run.csv
-python analyze.py 'data/*.csv' --output results/summary.csv
-python plot_results.py results/summary.csv
-python plot_timeseries.py data/L16_T2.3_seed1.csv --output results/L16_T2.3_trace.png
+python scripts/analyze.py data/L16_T2.3_seed1.csv --output results/single_run.csv
+python scripts/analyze.py 'data/*.csv' --output results/summary.csv
+python scripts/plot_results.py results/summary.csv
+python scripts/plot_timeseries.py data/L16_T2.3_seed1.csv --output results/L16_T2.3_trace.png
 ```
 
-`plot_results.py` writes `results/observables.png` and `.pdf`, showing each L
+`scripts/plot_results.py` writes `results/observables.png` and `.pdf`, showing each L
 with its own marker/color and the Onsager and mean-field reference temperatures.
 Each input file remains a separate point, including repeated seeds at the same
 L and T; replicas are not silently combined. No transition temperature is fitted.
-`plot_timeseries.py` plots signed m and energy against production sweep, plus
+`scripts/plot_timeseries.py` plots signed m and energy against production sweep, plus
 running averages. Inspect these and compare ordered/random starts and longer
 runs; an apparently flat trace alone does not prove equilibration.
 
-`analyze.py` writes one row per input file, taking L and T from file metadata,
+`scripts/analyze.py` writes one row per input file, taking L and T from file metadata,
 not filenames. Columns `abs_m`, `m`, `e_over_J`, `chi_J`, `chi_abs_J`, and
 `cv_over_kB` contain the mean absolute magnetization, mean signed magnetization,
 mean energy per spin/J, signed-m fluctuation susceptibility times J,
@@ -137,8 +159,8 @@ Repeat analysis with progressively larger blocks and check whether errors
 stabilize while retaining many blocks (ideally at least 20). For example:
 
 ```bash
-python analyze.py 'data/*.csv' --block-size 500 --output results/summary_b500.csv
-python analyze.py 'data/*.csv' --block-size 1000 --output results/summary_b1000.csv
+python scripts/analyze.py 'data/*.csv' --block-size 500 --output results/summary_b500.csv
+python scripts/analyze.py 'data/*.csv' --block-size 1000 --output results/summary_b1000.csv
 ```
 
 All retained samples enter central estimates. An incomplete final block is
@@ -167,9 +189,9 @@ Pillow. The simulation and animation remain separate commands.
 Try a short demonstration first (this is not a converged thermodynamic run):
 
 ```bash
-python ising.py --L 32 --T 2.3 --burn 500 --sweeps 1000 --seed 1 \
+python scripts/ising.py --L 32 --T 2.3 --burn 500 --sweeps 1000 --seed 1 \
   --output data/demo.csv --snapshot-every 5
-python animate_spins.py data/demo.snapshots.npz --output results/spins.gif
+python scripts/animate_spins.py data/demo.snapshots.npz --output results/spins.gif
 ```
 
 Dots stay at fixed lattice positions: **blue = +1**, **red = -1**. The animation
@@ -204,11 +226,11 @@ Animation options:
 
 ```bash
 # Use only production frames; display every second recorded frame at 15 fps.
-python animate_spins.py data/demo.snapshots.npz --production-only --stride 2 \
+python scripts/animate_spins.py data/demo.snapshots.npz --production-only --stride 2 \
   --fps 15 --output results/production.gif
 
 # MP4 requires the external FFmpeg executable installed and on PATH.
-python animate_spins.py data/demo.snapshots.npz --output results/spins.mp4
+python scripts/animate_spins.py data/demo.snapshots.npz --output results/spins.mp4
 ```
 
 GIF works without FFmpeg. The animation script refuses to overwrite an existing
@@ -223,15 +245,15 @@ output names. Starting randomly lets you observe ordering and domain growth.
 
 ## Convergence checks and extra runs
 
-See [CONVERGENCE.md](CONVERGENCE.md) for the ordered command checklist for your
-104-run scan. `run_convergence.py` previews or executes focused extra runs;
-`check_convergence.py` generates a Markdown report with traces, discard and
+See [CONVERGENCE.md](docs/CONVERGENCE.md) for the ordered command checklist for your
+104-run scan. `scripts/run_convergence.py` previews or executes focused extra runs;
+`scripts/check_convergence.py` generates a Markdown report with traces, discard and
 block-size sensitivity, and comparisons between starts, seeds and run lengths.
 The analysis never launches simulations. All extra runs require `--run`.
 
 ## Mean-field and magnetic-supercell comparisons
 
-See [MAGNETISM_EXTENSIONS.md](MAGNETISM_EXTENSIONS.md) for separate scripts
+See [MAGNETISM_EXTENSIONS.md](docs/MAGNETISM_EXTENSIONS.md) for separate scripts
 comparing Monte Carlo with mean field, extracting nearest-neighbour SRO,
 generating random and compensated references, measuring spatial correlations
 from snapshots, and integrating exploratory magnetic free energies. The guide
@@ -239,8 +261,9 @@ starts with your existing L=16 scan and identifies any additional data needed.
 
 ## Three-component spins in 2D or 3D
 
-See [HEISENBERG.md](HEISENBERG.md) for the separate `heisenberg.py` simulator,
+See [HEISENBERG.md](docs/HEISENBERG.md) for the separate `scripts/heisenberg.py` simulator,
 with square or simple-cubic periodic lattices, unit-vector moments and optional
-biquadratic exchange K/J. Use `analyze_heisenberg.py` and `plot_heisenberg.py`
+biquadratic exchange K/J. Use `scripts/analyze_heisenberg.py` and `scripts/plot_heisenberg.py`
 for vector susceptibility, heat capacity, correlations and Binder cumulants.
-The original scalar `ising.py` and its analysis remain unchanged.
+The original scalar `scripts/ising.py` and its analysis remain unchanged.
+

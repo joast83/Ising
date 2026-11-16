@@ -1,5 +1,8 @@
 # Convergence workflow for your Ising scan
 
+Run the commands below from the repository root, not from `docs/`.
+
+
 Your original scan has L=8,16,24,32,40,48,56,64 and 13 temperatures, with
 10,000 burn-in and 50,000 production sweeps per run. Let those runs finish.
 No snapshots or reruns are needed to analyze their existing CSV files.
@@ -20,7 +23,7 @@ is unnecessary. All subsequent commands assume the environment is activated.
 ## 1. Check existing data before launching more simulations
 
 ```bash
-python check_convergence.py 'data/L64_T*_seed1.csv' \
+python scripts/check_convergence.py 'data/L64_T*_seed1.csv' \
   --T 1.0 2.2 2.25 2.3 2.35 2.4 \
   --output-dir results/check_existing
 ```
@@ -52,13 +55,13 @@ Nothing edits the raw data. Rerunning a report replaces its derived outputs.
 First preview the four commands (no simulations are launched):
 
 ```bash
-python run_convergence.py quick
+python scripts/run_convergence.py quick
 ```
 
 Then execute them serially:
 
 ```bash
-python run_convergence.py quick --run
+python scripts/run_convergence.py quick --run
 ```
 
 | Stage | L | T* | Starts | Seeds | Burn | Production | Runs |
@@ -82,7 +85,7 @@ trajectory. Restarting after moving a partial file restarts that run from scratc
 ## 3. Compare the new runs with your original result
 
 ```bash
-python check_convergence.py 'data/L64_T2.3_seed1.csv' 'data/convergence/*.csv' \
+python scripts/check_convergence.py 'data/L64_T2.3_seed1.csv' 'data/convergence/*.csv' \
   --L 64 --T 2.3 --output-dir results/check_quick
 ```
 
@@ -96,8 +99,8 @@ Fluctuation quantities often need longer runs than the means.
 ## 4. Test longer runs at the difficult point
 
 ```bash
-python run_convergence.py long --run
-python check_convergence.py 'data/L64_T2.3_seed1.csv' 'data/convergence/*.csv' \
+python scripts/run_convergence.py long --run
+python scripts/check_convergence.py 'data/L64_T2.3_seed1.csv' 'data/convergence/*.csv' \
   --L 64 --T 2.3 --error-block 2000 --output-dir results/check_lengths
 ```
 
@@ -110,7 +113,7 @@ is a starting choice, not a guarantee that correlations have vanished.
 
 A longer run is a fresh independent trajectory with a different seed, not an
 extension of your original CSV. If a different temperature looks worse in your
-initial report, prioritize that temperature with a custom `ising.py` command.
+initial report, prioritize that temperature with a custom `scripts/ising.py` command.
 The scripts do not claim these proposed lengths guarantee convergence.
 
 ## 5. Optional broader check
@@ -118,15 +121,15 @@ The scripts do not claim these proposed lengths guarantee convergence.
 If you want to check size and temperature dependence more thoroughly:
 
 ```bash
-python run_convergence.py extended --run
-python check_convergence.py 'data/L*_T*_seed1.csv' 'data/convergence/*.csv' \
+python scripts/run_convergence.py extended --run
+python scripts/check_convergence.py 'data/L*_T*_seed1.csv' 'data/convergence/*.csv' \
   --L 32 64 --T 2.25 2.3 --output-dir results/check_extended
 ```
 
 You can also run diagnostics on the entire completed original scan:
 
 ```bash
-python check_convergence.py 'data/L*_T*_seed1.csv' \
+python scripts/check_convergence.py 'data/L*_T*_seed1.csv' \
   --output-dir results/check_all
 ```
 
@@ -134,8 +137,8 @@ This creates several plots for each of 104 runs, so start with the focused
 checks above. Ordinary temperature-dependent thermodynamic plots remain:
 
 ```bash
-python analyze.py 'data/L*_T*_seed1.csv' --block-size 1000 --output results/summary.csv
-python plot_results.py results/summary.csv
+python scripts/analyze.py 'data/L*_T*_seed1.csv' --block-size 1000 --output results/summary.csv
+python scripts/plot_results.py results/summary.csv
 ```
 
 ## How to decide what to do next

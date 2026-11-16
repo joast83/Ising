@@ -1,8 +1,11 @@
 # Scalar Ising and vector-spin Heisenberg simulations
 
-The original `ising.py` remains unchanged: scalar +/-1 spins on an L x L square
+Run the commands below from the repository root, not from `docs/`.
+
+
+The original `scripts/ising.py` remains unchanged: scalar +/-1 spins on an L x L square
 lattice, with its existing analysis and animation scripts. The separate
-`heisenberg.py` uses three-component **classical unit vectors**, on either a
+`scripts/heisenberg.py` uses three-component **classical unit vectors**, on either a
 square (`--dim 2`) or simple-cubic (`--dim 3`) lattice with periodic boundaries.
 Lattice dimension and spin dimension are different choices. The square lattice
 is an ideal 2D periodic layer, not a model of a surface coupled to a bulk substrate.
@@ -21,14 +24,14 @@ beyond the existing NumPy/Matplotlib analysis environment are required.
 Your old workflow still works:
 
 ```bash
-python ising.py --L 16 --T 2.3 --burn 10000 --sweeps 50000 \
+python scripts/ising.py --L 16 --T 2.3 --burn 10000 --sweeps 50000 \
   --seed 1 --output data/ising_L16_T2.3.csv
 ```
 
 A small 3D vector-spin run (4 cubed = 64 spins):
 
 ```bash
-python heisenberg.py --dim 3 --L 4 --T 1.45 --K 0 \
+python scripts/heisenberg.py --dim 3 --L 4 --T 1.45 --K 0 \
   --burn 1000 --sweeps 5000 --seed 1 \
   --output data/heisenberg/d3_L4_T1.45_K0_seed1.csv
 ```
@@ -36,7 +39,7 @@ python heisenberg.py --dim 3 --L 4 --T 1.45 --K 0 \
 A 2D layer with vector spins (16 squared = 256 spins):
 
 ```bash
-python heisenberg.py --dim 2 --L 16 --T 1.0 --K 0 \
+python scripts/heisenberg.py --dim 2 --L 16 --T 1.0 --K 0 \
   --burn 1000 --sweeps 5000 --seed 1 \
   --output data/heisenberg/d2_L16_T1.0_K0_seed1.csv
 ```
@@ -89,7 +92,7 @@ Try L=4 first; add L=6 and then L=8 after estimating runtime:
 ```bash
 for L in 4 6; do
   for T in 0.5 1.0 1.2 1.35 1.45 1.55 1.7 2.0 2.5 3.0; do
-    python heisenberg.py --dim 3 --L "$L" --T "$T" --K 0 \
+    python scripts/heisenberg.py --dim 3 --L "$L" --T "$T" --K 0 \
       --burn 1000 --sweeps 5000 --seed 1 \
       --output "data/heisenberg/d3_L${L}_T${T}_K0_seed1.csv"
   done
@@ -100,29 +103,29 @@ If you already ran the standalone L=4,T=1.45 example, that filename exists.
 Skip that point or use a separate directory for the scan. The simulator refuses
 to overwrite it. Repeat important points with more sweeps, different seeds and
 both initial states. Near-transition samples can be strongly correlated.
-The existing `run_convergence.py` is for scalar Ising only, not this new model.
+The existing `scripts/run_convergence.py` is for scalar Ising only, not this new model.
 
 Analyze and plot **vector data only**:
 
 ```bash
-python analyze_heisenberg.py 'data/heisenberg/*.csv' \
+python scripts/analyze_heisenberg.py 'data/heisenberg/*.csv' \
   --block-size 100 --output results/heisenberg/summary.csv
-python plot_heisenberg.py results/heisenberg/summary.csv
+python scripts/plot_heisenberg.py results/heisenberg/summary.csv
 ```
 
 Figures are PNG and PDF, one set per lattice dimension and K/J. Different L
 have separate markers; replicas remain individual points. Analysis rejects
 incomplete runs, inconsistent observables, and scalar Ising files. Do not use
-`analyze.py`, `plot_results.py`, `check_convergence.py` or the scalar free-energy
+`scripts/analyze.py`, `scripts/plot_results.py`, `scripts/check_convergence.py` or the scalar free-energy
 script on vector files. In particular, the spin integration measure and entropy
 reference of continuous spins must be specified before extending free-energy work.
 
 To check errors and initial-data sensitivity, rerun the vector analysis:
 
 ```bash
-python analyze_heisenberg.py 'data/heisenberg/*.csv' \
+python scripts/analyze_heisenberg.py 'data/heisenberg/*.csv' \
   --block-size 250 --output results/heisenberg/summary_b250.csv
-python analyze_heisenberg.py 'data/heisenberg/*.csv' \
+python scripts/analyze_heisenberg.py 'data/heisenberg/*.csv' \
   --block-size 100 --discard 1000 --output results/heisenberg/summary_discard1000.csv
 ```
 
@@ -210,7 +213,7 @@ At one size and temperature, a first comparison is:
 
 ```bash
 for K in -0.5 0.0 0.5; do
-  python heisenberg.py --dim 3 --L 4 --T 1.45 --K "$K" \
+  python scripts/heisenberg.py --dim 3 --L 4 --T 1.45 --K "$K" \
     --burn 1000 --sweeps 5000 --seed 2 \
     --output "data/heisenberg/d3_L4_T1.45_K${K}_seed2.csv"
 done
